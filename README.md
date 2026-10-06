@@ -1,6 +1,6 @@
 <div align="center">
 
-<h1>Evalium !</h1>
+<h1>Evalium.</h1>
 
 <p><strong>Evalium — Production-grade AI Evaluation Infrastructure.<br/>G-Eval, LLM-as-a-Judge, RAG evaluation, and fully customisable AI evaluation pipelines. Built in public. Designed for production.</strong></p>
 

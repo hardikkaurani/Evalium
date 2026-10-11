@@ -1287,7 +1287,7 @@ Distributed under the **MIT License**. See [LICENSE](LICENSE) for details.
 
 <div align="center">
 
-_EvalForge — built for AI engineers who refuse to ship LLMs they cannot measure._
+_EvalForge — built for AI engineers who refuse to ship LLMs they cannot measure !_
 
 <br/>
 

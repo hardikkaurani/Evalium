@@ -1,4 +1,3 @@
-# trunk-ignore-all(isort)
 from fastapi import APIRouter, Depends
 
 from app.advanced_ai.routes.agents import router as agents_router

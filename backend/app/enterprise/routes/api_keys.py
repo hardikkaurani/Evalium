@@ -94,7 +94,9 @@ async def revoke_api_key(
     ):
         raise HTTPException(status_code=404, detail="API Key not found")
 
-    if target_key.organization_id is not None and not str(caller_ws).startswith("<MagicMock"):
+    if target_key.organization_id is not None and not str(caller_ws).startswith(
+        "<MagicMock"
+    ):
         try:
             await _verify_org_membership(
                 db, current_key, uuid.UUID(str(target_key.organization_id))

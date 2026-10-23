@@ -30,11 +30,16 @@ def test_mask_connection_url_handles_empty_or_no_password():
 
 def test_doctor_development_success():
     doctor = EnvironmentDoctor(target_env="development")
-    passed = doctor.run_all()
-    assert passed is True
-    assert len(doctor.errors) == 0
-    report = doctor.format_report()
-    assert "ALL AUDIT GATES PASSED" in report
+    with (
+        patch("shutil.which", return_value="/mock/bin"),
+        patch("subprocess.run") as mock_sub,
+    ):
+        mock_sub.return_value.stdout = "v22.0.0\n"
+        passed = doctor.run_all()
+        assert passed is True
+        assert len(doctor.errors) == 0
+        report = doctor.format_report()
+        assert "ALL AUDIT GATES PASSED" in report
 
 
 def test_doctor_detects_invalid_python_version():

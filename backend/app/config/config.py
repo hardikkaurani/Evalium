@@ -160,8 +160,7 @@ class Settings(BaseSettings):
             if (
                 not secret_val
                 or _is_insecure_credential(secret_val)
-                or secret_val
-                == "dev-secret-key-evalforge-placeholder"  # nosec B105
+                or secret_val == "dev-secret-key-evalforge-placeholder"  # nosec B105
                 or len(secret_val) < 16
             ):
                 raise ValueError(

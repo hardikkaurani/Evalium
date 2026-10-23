@@ -72,9 +72,7 @@ class JobService:
             sched = request.scheduled_at
             if sched.tzinfo is None:
                 sched = sched.replace(tzinfo=timezone.utc)
-            delay_seconds = int(
-                (sched - datetime.now(timezone.utc)).total_seconds()
-            )
+            delay_seconds = int((sched - datetime.now(timezone.utc)).total_seconds())
             if delay_seconds > 0:
                 celery_task.apply_async(
                     args=[job.id],

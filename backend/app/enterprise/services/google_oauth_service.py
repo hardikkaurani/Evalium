@@ -69,9 +69,7 @@ class GoogleOAuthService:
     """Production-grade service handling Google OAuth 2.0 / OpenID Connect authentication."""
 
     GOOGLE_AUTH_ENDPOINT = "https://accounts.google.com/o/oauth2/v2/auth"
-    GOOGLE_TOKEN_ENDPOINT = (
-        "https://oauth2.googleapis.com/token"  # nosec B105
-    )
+    GOOGLE_TOKEN_ENDPOINT = "https://oauth2.googleapis.com/token"  # nosec B105
     GOOGLE_JWKS_ENDPOINT = "https://www.googleapis.com/oauth2/v3/certs"
     STATE_EXPIRATION_SECONDS = 600  # 10 minutes
 

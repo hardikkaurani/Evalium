@@ -166,7 +166,7 @@ if __name__ == "__main__":
 
     uvicorn.run(
         "app.main:app",
-        host="0.0.0.0",  # nosec B104  # trunk-ignore(bandit/B104)
+        host="0.0.0.0",  # nosec B104
         port=settings.PORT,
         reload=settings.APP_ENV == "development",
     )

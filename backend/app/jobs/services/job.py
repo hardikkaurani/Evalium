@@ -8,13 +8,13 @@ from app.core.exceptions import NotFoundException
 from app.database.repository import ProjectRepository
 from app.jobs.models.job import ExecutionHistory, Job, Queue, Worker
 from app.jobs.queue.tasks import run_background_job
-
-celery_task: Any = run_background_job
 from app.jobs.repositories.job import JobRepository
 from app.jobs.schemas.job import (
     JobCreate,
     SystemMetricsResponse,
 )
+
+celery_task: Any = run_background_job
 
 
 class JobService:

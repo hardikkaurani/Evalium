@@ -31,10 +31,6 @@ lint:
     - linters: [bandit]
       paths:
         - "scripts/**"
-    - linters: [osv-scanner]
-      paths:
-        - "backend/requirements.txt"
-        - "backend/requirements.lock"
     - linters: [ALL]
       paths:
         - "**/__pyrefly_virtual__/**"

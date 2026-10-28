@@ -829,116 +829,43 @@ gantt
 
 ## Project Structure
 
-```
+```text
 Evalium/
-|
-+-- .github/
-|   +-- workflows/
-|   |   +-- ci.yml                   # Lint, type-check, pytest on every PR
-|   |   +-- release.yml              # Tag and release automation
-|   +-- ISSUE_TEMPLATE/
-|   |   +-- bug_report.md
-|   |   +-- feature_request.md
-|   +-- PULL_REQUEST_TEMPLATE.md
-|
-+-- backend/
-|   +-- app/
-|   |   +-- api/
-|   |   |   +-- v1/
-|   |   |       +-- auth.py          # /auth/register, /auth/login, /auth/refresh
-|   |   |       +-- projects.py      # Project CRUD
-|   |   |       +-- datasets.py      # Dataset upload, version management
-|   |   |       +-- runs.py          # Run submission, status, results
-|   |   |       +-- leaderboard.py   # Aggregate model ranking
-|   |   |       +-- keys.py          # API key management
-|   |   |       +-- health.py        # /health endpoint
-|   |   +-- core/
-|   |   |   +-- config.py            # Pydantic BaseSettings, env loading
-|   |   |   +-- security.py          # JWT helpers, bcrypt, token rotation
-|   |   |   +-- dependencies.py      # FastAPI dependency injection
-|   |   |   +-- middleware.py        # RBAC, tenant context, rate limit
-|   |   +-- db/
-|   |   |   +-- engine.py            # Async SQLAlchemy engine and session factory
-|   |   |   +-- base.py              # Declarative base, UUID PK mixin, timestamp mixin
-|   |   +-- models/                  # SQLAlchemy ORM models
-|   |   |   +-- user.py
-|   |   |   +-- organisation.py
-|   |   |   +-- team.py
-|   |   |   +-- project.py
-|   |   |   +-- dataset.py
-|   |   |   +-- run.py
-|   |   |   +-- test_case_result.py
-|   |   |   +-- api_key.py
-|   |   +-- schemas/                 # Pydantic request and response schemas
-|   |   +-- services/                # Business logic layer
-|   |   |   +-- run_service.py       # Run creation, dispatch, status management
-|   |   |   +-- dataset_service.py   # Upload parsing, versioning, storage
-|   |   |   +-- auth_service.py      # Registration, login, token management
-|   |   +-- evaluation/              # Evaluation engine
-|   |   |   +-- judge_base.py        # Abstract JudgeBase interface and EvalResult type
-|   |   |   +-- registry.py          # MetricRegistry — metric name to judge class mapping
-|   |   |   +-- geval.py             # G-Eval two-call chain-of-thought implementation
-|   |   |   +-- deepeval_judge.py    # DeepEval framework wrapper
-|   |   |   +-- alpaca.py            # AlpacaEval winrate integration
-|   |   |   +-- pairwise.py          # Pairwise A/B comparator with ELO updater
-|   |   |   +-- custom.py            # Custom Jinja2 prompt template judge
-|   |   |   +-- rag_pipeline.py      # Full RAG evaluation pipeline orchestrator
-|   |   |   +-- normaliser.py        # Per-metric score normalisation and calibration
-|   |   |   +-- templates/           # Jinja2 prompt templates per metric and model
-|   |   +-- workers/
-|   |   |   +-- tasks.py             # Celery task definitions
-|   |   |   +-- celery_app.py        # Celery app factory with broker and backend config
-|   |   +-- main.py                  # FastAPI app factory, lifespan, router registration
-|   +-- alembic/
-|   |   +-- versions/                # Migration files
-|   |   +-- env.py                   # Alembic async migration environment
-|   +-- requirements.txt
-|   +-- requirements-dev.txt         # Dev dependencies — pytest, mypy, ruff
-|
-+-- frontend/
-|   +-- src/
-|   |   +-- components/              # Reusable UI components
-|   |   +-- pages/                   # Dashboard, Projects, Datasets, Runs, Leaderboard
-|   |   +-- api/                     # Typed Axios client wrappers per resource
-|   |   +-- hooks/                   # useRun, useDataset, useLeaderboard, useAuth
-|   |   +-- context/                 # AuthContext, TenantContext
-|   |   +-- types/                   # TypeScript type definitions mirroring backend schemas
-|   |   +-- utils/                   # Date formatting, score colour coding, chart helpers
-|   +-- vite.config.ts
-|   +-- tsconfig.json
-|
-+-- datasets/                        # Sample golden datasets for development and testing
-+-- docker/
-|   +-- backend.Dockerfile           # Multi-stage Python build
-|   +-- frontend.Dockerfile          # Multi-stage Node.js build, nginx serving
-+-- docs/
-|   +-- ARCHITECTURE.md              # System architecture design
-|   +-- HLD.md                       # High-level system design
-|   +-- LLD.md                       # Low-level component design
-|   +-- PRD.md                       # Product requirements document
-|   +-- api.md                       # Full API reference
-|   +-- architecture.md              # Detailed architecture decisions
-|   +-- self-hosting.md              # Production deployment guide
-|   +-- assets/                      # README banner, screenshots
-+-- examples/
-|   +-- python_sdk_example.py        # Python SDK usage
-|   +-- github_actions_example.yml   # CI integration template
-|   +-- curl_examples.sh             # Raw REST API examples
-+-- scripts/
-|   +-- seed.py                      # Database seed with sample data
-|   +-- generate_migration.sh        # Alembic migration generation helper
-+-- tests/
-|   +-- unit/                        # Unit tests per service and evaluation module
-|   +-- integration/                 # API integration tests using TestClient
-|   +-- fixtures/                    # Shared test fixtures and mock LLM responses
-+-- docker-compose.yml               # Development stack
-+-- docker-compose.prod.yml          # Production stack with resource limits
-+-- CONTRIBUTING.md
-+-- CHANGELOG.md
-+-- ROADMAP.md
-+-- SECURITY.md
-+-- LICENSE
-+-- README.md
+├── .github/                         # CI/CD workflows, issue templates, dependabot
+├── .trunk/                          # Trunk linter & code health configurations
+├── .vscode/                         # IDE settings and schema validations
+├── backend/                         # FastAPI core, SQLAlchemy models, evaluation engine, Alembic
+│   ├── app/
+│   │   ├── api/v1/                  # REST endpoints (auth, projects, datasets, runs, providers)
+│   │   ├── core/                    # Config, security, middleware, RBAC, logging, exceptions
+│   │   ├── database/                # Async engine and session factory
+│   │   ├── enterprise/              # SaaS billing, organizations, workspaces, Google OAuth
+│   │   ├── evaluation/              # JudgeBase, G-Eval, DeepEval, RAG pipeline, registry
+│   │   ├── jobs/                    # Celery workers, job scheduler, tasks
+│   │   └── models/                  # Domain ORM entities
+│   ├── alembic/                     # Database migrations
+│   └── tests/                       # Pytest backend test suite (200+ tests)
+├── frontend/                        # React 18 + Vite + TypeScript single-page application
+│   ├── src/                         # Components, pages, hooks, context, services
+│   └── tests/                       # Playwright browser end-to-end test suite
+├── cli/                             # Official Evalium Command-Line Interface (`evalforge-cli`)
+│   ├── evalforge_cli/               # CLI commands, config, client integration
+│   └── tests/                       # Pytest CLI suite
+├── sdk/                             # Official multi-language client SDKs
+│   ├── python/                      # Python SDK package (`evalforge`)
+│   ├── typescript/                  # TypeScript / Node.js SDK
+│   ├── go/                          # Go SDK client
+│   └── java/                        # Java client library (Maven)
+├── datasets/                        # Managed evaluation datasets & golden benchmarks
+├── docker/                          # Multi-stage Dockerfiles, nginx proxy, Grafana & Prometheus
+├── docs/                            # Canonical technical documentation (Architecture, API, PRD, HLD, LLD)
+├── examples/                        # Multilingual quickstart code (Python, TS, Go, Java, cURL)
+├── scripts/                         # Developer utilities, environment doctor, setup scripts
+├── tests/                           # Monorepo test architecture map and cross-cutting guidance
+├── docker-compose.yml               # Local development container stack
+├── docker-compose.prod.yml          # Production container deployment stack
+├── pyproject.toml                   # Root monorepo Python tooling (pytest, pyright, isort)
+└── README.md                        # Project documentation and onboarding guide
 ```
 
 ---
@@ -1185,12 +1112,14 @@ Evalium now includes a modular evaluation engine with:
 
 ### Documentation
 
+- [System Architecture](docs/ARCHITECTURE.md)
+- [REST API Reference](docs/api.md)
+- [Developer Guide](docs/developer_guide.md)
+- [Production Deployment Guide](docs/deployment_guide.md)
 - [Evaluation Engine Guide](docs/evaluation-engine-guide.md)
 - [Provider Guide](docs/provider-guide.md)
 - [Rubric Guide](docs/rubric-guide.md)
-- [API Documentation](docs/api-documentation.md)
-- [Architecture Diagram](docs/architecture-diagram.md)
-- [Developer Documentation](docs/developer-documentation.md)
+- [MCP Server Guide](docs/mcp.md)
 
 ---
 

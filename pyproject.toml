@@ -25,3 +25,8 @@ project-excludes = [
 profile = "black"
 src_paths = ["backend", "cli", "sdk/python"]
 known_first_party = ["app", "evalforge", "evalforge_cli"]
+
+[tool.pytest.ini_options]
+testpaths = ["backend/tests", "sdk/python/tests", "cli/tests"]
+pythonpath = ["backend", "cli", "sdk/python"]
+asyncio_mode = "strict"

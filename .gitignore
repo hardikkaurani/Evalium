@@ -234,3 +234,8 @@ frontend/playwright-report/
 *.db
 *.sqlite
 *.sqlite3
+
+# AI & IDE Tooling Workspaces
+.claude/
+.kilo/
+.kilocode/

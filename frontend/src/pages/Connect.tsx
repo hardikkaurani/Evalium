@@ -1,14 +1,19 @@
 import { useState, type FormEvent } from 'react';
-import { Link, Navigate, useLocation, useSearchParams } from 'react-router-dom';
-import { Database, FlaskConical, KeyRound, ArrowRight } from 'lucide-react';
+import { Link, Navigate, useSearchParams } from 'react-router-dom';
+import { Database, FlaskConical, KeyRound, ArrowRight, Mail, Lock, User, LogIn, UserPlus } from 'lucide-react';
 import { useConnection } from '../context/ConnectionContext';
 import { ThemeControl } from '../layouts/WorkspaceShell';
 import { Button, ErrorNotice, Field } from '../components/ui';
+import { client } from '../services/client';
 
 export default function Connect() {
   const { connected, connect } = useConnection();
-  const { pathname } = useLocation();
   const [searchParams] = useSearchParams();
+  const [authMethod, setAuthMethod] = useState<'credentials' | 'apikey'>('credentials');
+  const [mode, setMode] = useState<'login' | 'register'>('login');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [name, setName] = useState('');
   const [key, setKey] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<unknown>(null);
@@ -41,7 +46,7 @@ export default function Connect() {
     window.location.href = `${backendUrl}/auth/google/start`;
   };
 
-  const submit = async (event: FormEvent) => {
+  const submitApiKey = async (event: FormEvent) => {
     event.preventDefault();
     if (busy) return;
     setBusy(true);
@@ -55,6 +60,38 @@ export default function Connect() {
       setBusy(false);
     }
   };
+
+  const submitCredentials = async (event: FormEvent) => {
+    event.preventDefault();
+    if (busy) return;
+    setBusy(true);
+    setError(null);
+    try {
+      if (mode === 'register') {
+        const resp = await client.post('/auth/register', {
+          email: email.trim(),
+          password,
+          name: name.trim() || undefined,
+        });
+        const apiKey = resp.data?.data?.api_key;
+        if (!apiKey) throw new Error('Registration failed: no session key returned.');
+        await connect(apiKey);
+      } else {
+        const resp = await client.post('/auth/login', {
+          email: email.trim(),
+          password,
+        });
+        const apiKey = resp.data?.data?.api_key;
+        if (!apiKey) throw new Error('Login failed: no session key returned.');
+        await connect(apiKey);
+      }
+    } catch (e) {
+      setError(e);
+    } finally {
+      setBusy(false);
+    }
+  };
+
   return (
     <div className="login-page bg-[#F6F4EE] dark:bg-[#182026]">
       <section className="login-story bg-white dark:bg-[#202A32] border-r border-[#DDE4E1] dark:border-[#2E3A44]">
@@ -115,18 +152,13 @@ export default function Connect() {
             <ThemeControl />
           </div>
           <h1>Connect your workspace</h1>
-          <p>Enter an Evalium API key to access your projects.</p>
-          {pathname !== '/login' && (
-            <div className="notice info" style={{ marginBottom: 20 }}>
-              This installation uses API keys. Account registration and password recovery are not
-              available. Ask your administrator for a key.
-            </div>
-          )}
+          <p>Sign in with Google, email, or a workspace API key.</p>
           {oauthError && (
             <div style={{ marginBottom: 16 }}>
               <ErrorNotice error={getOAuthErrorMessage(oauthError)} />
             </div>
           )}
+
           <button
             type="button"
             onClick={startGoogleLogin}
@@ -158,47 +190,187 @@ export default function Connect() {
             </svg>
             <span>Continue with Google</span>
           </button>
+
           <div className="relative flex items-center justify-center my-4">
             <div className="border-t border-[#DDE4E1] dark:border-[#2E3A44] w-full" />
             <span className="bg-white dark:bg-[#202A32] px-3 text-xs text-[#4c5f6b] dark:text-[#b0c2c6] uppercase tracking-wider font-mono shrink-0">
-              or continue with API key
+              or {authMethod === 'credentials' ? 'continue with email' : 'continue with API key'}
             </span>
           </div>
-          <form className="form-stack" onSubmit={submit}>
-            {error !== null && <ErrorNotice error={error} />}
-            <Field
-              label="API key"
-              hint="Stored for this browser session only. Disconnect to remove it."
-            >
-              {(id) => (
-                <input
-                  id={id}
-                  className="control mono"
-                  type="password"
-                  autoComplete="off"
-                  spellCheck={false}
-                  required
-                  placeholder="Enter your workspace API key"
-                  value={key}
-                  onChange={(e) => setKey(e.target.value)}
-                />
-              )}
-            </Field>
-            <Button type="submit" variant="primary" busy={busy} disabled={!key.trim()}>
-              <KeyRound size={16} />
-              Connect workspace
-              <ArrowRight size={16} />
-            </Button>
-          </form>
-          <details className="setup-help">
-            <summary>Need an API key?</summary>
+
+          {authMethod === 'credentials' ? (
+            <div className="auth-credentials-section">
+              <div className="flex border-b border-[#DDE4E1] dark:border-[#2E3A44] mb-4">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMode('login');
+                    setError(null);
+                  }}
+                  className={`pb-2 px-3 text-sm font-medium border-b-2 transition-colors ${
+                    mode === 'login'
+                      ? 'border-[#0284C7] text-[#0284C7] dark:text-[#38BDF8]'
+                      : 'border-transparent text-[#64748B] hover:text-[#0F172A] dark:hover:text-[#F1F5F9]'
+                  }`}
+                >
+                  Sign In
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMode('register');
+                    setError(null);
+                  }}
+                  className={`pb-2 px-3 text-sm font-medium border-b-2 transition-colors ${
+                    mode === 'register'
+                      ? 'border-[#0284C7] text-[#0284C7] dark:text-[#38BDF8]'
+                      : 'border-transparent text-[#64748B] hover:text-[#0F172A] dark:hover:text-[#F1F5F9]'
+                  }`}
+                >
+                  Create Account
+                </button>
+              </div>
+
+              <form className="form-stack" onSubmit={submitCredentials}>
+                {error !== null && <ErrorNotice error={error} />}
+
+                {mode === 'register' && (
+                  <Field label="Full Name (optional)">
+                    {(id) => (
+                      <div className="relative">
+                        <User className="absolute left-3 top-3 text-[#94A3B8]" size={16} />
+                        <input
+                          id={id}
+                          className="control"
+                          style={{ paddingLeft: '36px' }}
+                          type="text"
+                          autoComplete="name"
+                          placeholder="Your name"
+                          value={name}
+                          onChange={(e) => setName(e.target.value)}
+                        />
+                      </div>
+                    )}
+                  </Field>
+                )}
+
+                <Field label="Email Address">
+                  {(id) => (
+                    <div className="relative">
+                      <Mail className="absolute left-3 top-3 text-[#94A3B8]" size={16} />
+                      <input
+                        id={id}
+                        className="control"
+                        style={{ paddingLeft: '36px' }}
+                        type="email"
+                        autoComplete="email"
+                        required
+                        placeholder="you@domain.com"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                      />
+                    </div>
+                  )}
+                </Field>
+
+                <Field label="Password">
+                  {(id) => (
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-3 text-[#94A3B8]" size={16} />
+                      <input
+                        id={id}
+                        className="control"
+                        style={{ paddingLeft: '36px' }}
+                        type="password"
+                        autoComplete={mode === 'register' ? 'new-password' : 'current-password'}
+                        required
+                        placeholder={mode === 'register' ? 'At least 8 characters' : 'Enter password'}
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                      />
+                    </div>
+                  )}
+                </Field>
+
+                <Button
+                  type="submit"
+                  variant="primary"
+                  busy={busy}
+                  disabled={!email.trim() || !password}
+                >
+                  {mode === 'login' ? <LogIn size={16} /> : <UserPlus size={16} />}
+                  {mode === 'login' ? 'Sign In' : 'Create Account'}
+                  <ArrowRight size={16} />
+                </Button>
+              </form>
+
+              <div className="text-center mt-4">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAuthMethod('apikey');
+                    setError(null);
+                  }}
+                  className="text-xs text-[#0284C7] dark:text-[#38BDF8] hover:underline"
+                >
+                  Have a direct workspace API key? Connect with API key instead →
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="auth-apikey-section">
+              <form className="form-stack" onSubmit={submitApiKey}>
+                {error !== null && <ErrorNotice error={error} />}
+                <Field
+                  label="API key"
+                  hint="Stored for this browser session only. Disconnect to remove it."
+                >
+                  {(id) => (
+                    <input
+                      id={id}
+                      className="control mono"
+                      type="password"
+                      autoComplete="off"
+                      spellCheck={false}
+                      required
+                      placeholder="Enter your workspace API key (ef_...)"
+                      value={key}
+                      onChange={(e) => setKey(e.target.value)}
+                    />
+                  )}
+                </Field>
+                <Button type="submit" variant="primary" busy={busy} disabled={!key.trim()}>
+                  <KeyRound size={16} />
+                  Connect workspace
+                  <ArrowRight size={16} />
+                </Button>
+              </form>
+
+              <div className="text-center mt-4">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAuthMethod('credentials');
+                    setError(null);
+                  }}
+                  className="text-xs text-[#0284C7] dark:text-[#38BDF8] hover:underline"
+                >
+                  ← Sign in or register with email & password
+                </button>
+              </div>
+            </div>
+          )}
+
+          <details className="setup-help" style={{ marginTop: 24 }}>
+            <summary>Authentication Options</summary>
             <p>
-              Ask your Evalium administrator for a workspace-scoped API key. Server administrators
-              can use the bootstrap command in the setup guide.
+              <strong>Google Sign-In:</strong> Direct single-sign-on provisioning.
             </p>
             <p>
-              Provider keys from OpenAI or other model services are configured on the backend and
-              cannot be used here.
+              <strong>Email & Password:</strong> Create a persistent workspace credentials account.
+            </p>
+            <p>
+              <strong>Workspace API Key:</strong> Enter a pre-provisioned developer key.
             </p>
             <a
               href="https://github.com/hardikkaurani/Evalium/blob/main/docs/ui-setup.md"

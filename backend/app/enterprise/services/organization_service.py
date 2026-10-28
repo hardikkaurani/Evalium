@@ -20,9 +20,17 @@ class OrganizationService:
         self, db: AsyncSession, org_id: Optional[uuid.UUID], role_name: str
     ) -> Role:
         """Retrieves or creates system roles (Owner, Admin, Member, Viewer)."""
-        stmt = select(Role).where(Role.name == role_name)
+        if org_id:
+            stmt = (
+                select(Role)
+                .where(Role.name == role_name)
+                .where((Role.organization_id == org_id) | (Role.organization_id.is_(None)))
+                .order_by(Role.organization_id.desc().nullslast())
+            )
+        else:
+            stmt = select(Role).where(Role.name == role_name, Role.organization_id.is_(None))
         res = await db.execute(stmt)
-        role = res.scalar_one_or_none()
+        role = res.scalars().first()
         if not role:
             permissions_map = {
                 "Owner": ["*"],
@@ -481,9 +489,17 @@ class OrganizationService:
 
         # If member is an Owner, check if other Owners exist
         if membership.role and membership.role.name == "Owner":
-            owner_role_stmt = select(Role.id).where(Role.name == "Owner")
+            owner_role_stmt = (
+                select(Role.id)
+                .where(Role.name == "Owner")
+                .where(
+                    (Role.organization_id == membership.organization_id)
+                    | (Role.organization_id.is_(None))
+                )
+                .order_by(Role.organization_id.desc().nullslast())
+            )
             owner_role_res = await db.execute(owner_role_stmt)
-            owner_role_id = owner_role_res.scalar_one_or_none()
+            owner_role_id = owner_role_res.scalars().first()
 
             count_stmt = select(sa.func.count(Membership.id)).where(
                 Membership.organization_id == org_id,

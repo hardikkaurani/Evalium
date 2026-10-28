@@ -1,5 +1,5 @@
 import os
-from typing import Literal
+from typing import Any, Literal
 from urllib.parse import unquote, urlparse
 
 from pydantic import Field, SecretStr, field_validator, model_validator
@@ -145,6 +145,26 @@ class Settings(BaseSettings):
     def validate_app_env(cls, v: str) -> str:
         if isinstance(v, str):
             return v.lower()
+        return v
+
+    @field_validator("DEBUG", mode="before")
+    @classmethod
+    def validate_debug(cls, v: Any) -> Any:
+        if isinstance(v, str):
+            v_lower = v.strip().lower()
+            if v_lower in ("true", "1", "t", "yes", "y", "debug", "dev", "development"):
+                return True
+            if v_lower in (
+                "false",
+                "0",
+                "f",
+                "no",
+                "n",
+                "release",
+                "prod",
+                "production",
+            ):
+                return False
         return v
 
     @model_validator(mode="after")

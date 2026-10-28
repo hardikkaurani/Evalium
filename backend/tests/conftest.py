@@ -6,6 +6,9 @@ from pathlib import Path
 from unittest.mock import AsyncMock, patch
 
 os.environ.setdefault("APP_ENV", "testing")
+# Ensure host environment variables like DEBUG='release' do not taint test Settings
+if os.environ.get("DEBUG") and os.environ.get("DEBUG").lower() in ("release", "debug"):
+    os.environ.pop("DEBUG", None)
 
 # Ensure root, cli, and sdk/python are in sys.path
 ROOT_DIR = Path(__file__).resolve().parents[2]

@@ -17,6 +17,7 @@ from app.enterprise.exceptions import (
     OAuthVerificationException,
 )
 from app.enterprise.schemas import OAuthSessionResponse
+from app.enterprise.services.credentials_auth_service import CredentialsAuthService
 from app.enterprise.services.google_oauth_service import (
     GoogleOAuthService,
     is_safe_redirect_url,
@@ -33,14 +34,90 @@ class OAuthCallbackRequest(BaseModel):
     state: str
 
 
+class EmailPasswordLoginRequest(BaseModel):
+    email: str
+    password: str
+
+
+class EmailPasswordRegisterRequest(BaseModel):
+    email: str
+    password: str
+    name: Optional[str] = None
+
+
 @router.get("/status", summary="Inspect available authentication methods")
 async def get_auth_status():
-    """Returns availability status of configured OAuth identity providers without exposing secrets."""
+    """Returns availability status of configured authentication methods without exposing secrets."""
     service = GoogleOAuthService()
     return create_response(
         success=True,
         message="Authentication status retrieved.",
-        data={"google_oauth_enabled": service.is_configured()},
+        data={
+            "google_oauth_enabled": service.is_configured(),
+            "credentials_enabled": True,
+        },
+    )
+
+
+@router.post(
+    "/register",
+    summary="Register user with email and password",
+    status_code=status.HTTP_201_CREATED,
+)
+async def register_user_endpoint(
+    payload: EmailPasswordRegisterRequest,
+    db: AsyncSession = Depends(get_db),
+):
+    """Registers a new user account, provisions an enterprise workspace, and returns an active session API key."""
+    service = CredentialsAuthService()
+    try:
+        session_res = await service.register_user(
+            db,
+            email=payload.email,
+            password=payload.password,
+            display_name=payload.name,
+        )
+    except OAuthConflictException as exc:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=str(exc),
+        ) from exc
+    except OAuthVerificationException as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(exc),
+        ) from exc
+
+    return create_response(
+        success=True,
+        message="Registration successful.",
+        data=session_res.model_dump(),
+    )
+
+
+@router.post("/login", summary="Sign in with email and password")
+async def login_user_endpoint(
+    payload: EmailPasswordLoginRequest,
+    db: AsyncSession = Depends(get_db),
+):
+    """Authenticates email and password credentials and issues an active workspace session API key."""
+    service = CredentialsAuthService()
+    try:
+        session_res = await service.login_user(
+            db,
+            email=payload.email,
+            password=payload.password,
+        )
+    except OAuthVerificationException as exc:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=str(exc),
+        ) from exc
+
+    return create_response(
+        success=True,
+        message="Login successful.",
+        data=session_res.model_dump(),
     )
 
 

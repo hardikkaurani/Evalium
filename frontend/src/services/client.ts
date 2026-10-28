@@ -74,10 +74,26 @@ export function pageData(value: unknown): PageData {
 export function errorMessage(error: unknown): string {
   if (axios.isAxiosError(error)) {
     const status = error.response?.status;
+    const responseData = error.response?.data;
+    if (responseData && typeof responseData === 'object') {
+      const msg = (responseData as Record<string, unknown>).message;
+      const detail = (responseData as Record<string, unknown>).detail;
+      if (
+        typeof msg === 'string' &&
+        msg.trim() &&
+        msg !== 'Internal Server Error. Please contact support.'
+      ) {
+        return redactText(msg.trim());
+      }
+      if (typeof detail === 'string' && detail.trim()) {
+        return redactText(detail.trim());
+      }
+    }
     if (status === 401)
       return 'This API key is invalid, expired, or revoked. Connect with a valid key.';
     if (status === 403) return 'Your API key does not have permission for this action.';
     if (status === 404) return 'This resource is unavailable or outside your workspace.';
+    if (status === 409) return 'An account with this email already exists. Please sign in instead.';
     if (status === 429) return 'Too many requests. Wait a moment, then retry.';
     if (status === 422 || status === 400)
       return 'The server rejected these values. Check the fields and try again.';
